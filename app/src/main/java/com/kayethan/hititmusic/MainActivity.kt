@@ -1,19 +1,16 @@
 package com.kayethan.hititmusic
 
-import android.content.Context
+import android.content.ContentUris
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import android.view.View
-import android.view.WindowManager
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -25,14 +22,18 @@ import com.kayethan.hititmusic.player.PlayerFragment
 import com.kayethan.hititmusic.service.AppMusicService
 import com.kayethan.hititmusic.settings.SettingsFragment
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.File
-import java.util.jar.Manifest
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     companion object {
         const val REQUEST_CODE = 1
+
+        lateinit var mediaPlayer: MediaPlayer
+
+        fun getTotalTime(): Int {
+            return mediaPlayer.duration
+        }
     }
 
     private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { menuItem ->
@@ -66,11 +67,25 @@ class MainActivity : AppCompatActivity() {
             bottomNavigationView.selectedItemId = R.id.navigation_player
         }
 
-        for (file in getAllMusic()) {
+        val intent = Intent(this, AppMusicService::class.java)
+        startService(intent)
+
+        val musicFiles = getAllMusic()
+
+        for (file in musicFiles) {
             Log.i("TEST", file.path + " | " + file.title)
         }
-//        val intent = Intent(this, AppMusicService::class.java)
-//        startService(intent)
+
+        // TEMP
+        mediaPlayer = MediaPlayer()
+        mediaPlayer.setAudioAttributes(
+                AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build()
+        )
+        mediaPlayer.setDataSource(applicationContext, ContentUris.withAppendedId(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, musicFiles[0].id))
+        mediaPlayer.prepare()
+        mediaPlayer.start()
+        mediaPlayer.isLooping = true
+        mediaPlayer.setVolume(0.5f, 0.5f)
     }
 
     private fun loadFragment(fragment: Fragment) {
@@ -111,6 +126,7 @@ class MainActivity : AppCompatActivity() {
         val result = ArrayList<MusicFile>()
 
         if (songCursor != null && songCursor.moveToFirst()) {
+            val songId: Int = songCursor.getColumnIndex(MediaStore.Audio.Media._ID)
             val songTitle: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
             val songArtist: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
             val songAlbum: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
@@ -118,13 +134,16 @@ class MainActivity : AppCompatActivity() {
             val songLocation: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.DATA)
 
             do {
+                val currentId: Long = songCursor.getLong(songId)
                 val currentTitle: String = songCursor.getString(songTitle)
                 val currentArtist: String = songCursor.getString(songArtist)
                 val currentLocation: String = songCursor.getString(songLocation)
                 val currentDuration: Int = songCursor.getInt(songDuration)
                 val currentAlbum: String = songCursor.getString(songAlbum)
 
-                result.add(MusicFile(currentLocation, currentTitle, currentArtist, currentAlbum, currentDuration))
+                if (currentLocation.endsWith(".mp3"))
+                    result.add(MusicFile(currentId, currentLocation, currentTitle, currentArtist, currentAlbum, currentDuration))
+
             } while (songCursor.moveToNext())
         }
 

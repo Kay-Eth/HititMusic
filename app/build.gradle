@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.lathuys.hititmusic"
+        applicationId "com.kayethan.hititmusic"
         minSdkVersion 29
         targetSdkVersion 30
         versionCode 1

@@ -27,6 +27,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="32dp"
+        android:singleLine="true"
         android:text="@string/no_title"
         android:textAlignment="center"
         android:textSize="30sp"

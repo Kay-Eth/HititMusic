@@ -6,7 +6,9 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.provider.Settings;
 import android.os.IBinder
+import android.provider.MediaStore
 import android.util.Log
+import com.kayethan.hititmusic.data.MusicFile
 
 class AppMusicService : Service() {
     private val TAG: String = "HititMusicService"
