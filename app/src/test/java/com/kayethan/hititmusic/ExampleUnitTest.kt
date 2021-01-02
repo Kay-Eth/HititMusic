@@ -1,4 +1,4 @@
-package com.lathuys.hititmusic
+package com.kayethan.hititmusic
 
 import org.junit.Test
 

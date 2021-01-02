@@ -1,4 +1,15 @@
 <resources>
     <string name="app_name">HititMusic</string>
     <string name="empty">Empty</string>
+
+    <!-- Navigation -->
+    <string name="navigation_musiclist">List</string>
+    <string name="navigation_player">Player</string>
+    <string name="navigation_settings">Settings</string>
+
+    <!-- Player -->
+    <string name="no_title">No Title</string>
+    <string name="no_artist">No Artist</string>
+    <string name="no_time">0:00</string>
+
 </resources>
