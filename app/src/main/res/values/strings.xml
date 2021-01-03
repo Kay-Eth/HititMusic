@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">HititMusic</string>
     <string name="empty">Empty</string>
+    <string name="no_music_found">No music files found</string>
 
     <!-- Navigation -->
     <string name="navigation_musiclist">List</string>
@@ -10,6 +11,7 @@
     <!-- Player -->
     <string name="no_title">No Title</string>
     <string name="no_artist">No Artist</string>
+    <string name="no_album">No Album</string>
     <string name="no_time">0:00</string>
 
 </resources>

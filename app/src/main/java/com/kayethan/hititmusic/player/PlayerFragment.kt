@@ -1,7 +1,6 @@
 package com.kayethan.hititmusic.player
 
 import android.annotation.SuppressLint
-import android.media.MediaPlayer
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.os.Handler
@@ -30,20 +29,12 @@ class PlayerFragment : Fragment() {
     }
 
     private lateinit var viewModel: PlayerViewModel
-    var handler = @SuppressLint("HandlerLeak")
-
+    private var handler = @SuppressLint("HandlerLeak")
     object : Handler() {
         override fun handleMessage(msg: Message) {
             try {
                 var currentPosition = msg.what
-
-                // Update progressBar
-                progressSB.progress = currentPosition
-                progressSB.max = MainActivity.mediaPlayer.duration
-
-                // Update labels
-                elapsedTimeTV.text = TimeHelper.secondsToLabel(currentPosition)
-                totalTimeTV.text = TimeHelper.secondsToLabel(MainActivity.mediaPlayer.duration)
+                this@PlayerFragment.updateView(currentPosition, MainActivity.getService()!!.getDuration(), MainActivity.getService()!!.isPlaying())
             } catch(e: Exception) {
                 Log.e("PLAYER", "STOP")
             }
@@ -59,14 +50,13 @@ class PlayerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         binding = PlayerFragmentBinding.bind(view)
 
         progressSB.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekbar: SeekBar?, progress: Int, fromUser: Boolean) {
                     if (fromUser) {
-                        MainActivity.mediaPlayer.seekTo(progress)
+                        MainActivity.getService()?.seekTo(progress)
                     }
                 }
 
@@ -77,6 +67,10 @@ class PlayerFragment : Fragment() {
                 }
             }
         )
+
+        previousIB.setOnClickListener { this@PlayerFragment.onPreviousButtonClicked() }
+        playIB.setOnClickListener { this@PlayerFragment.onPlayPauseButtonClicked() }
+        nextIB.setOnClickListener { this@PlayerFragment.onNextButtonClicked() }
     }
 
     override fun onResume() {
@@ -86,19 +80,26 @@ class PlayerFragment : Fragment() {
 
         thread = Thread(Runnable {
             try {
-                while (MainActivity.mediaPlayer != null) {
-                    var msg = Message()
-                    msg.what = MainActivity.mediaPlayer.currentPosition
-                    handler.sendMessage(msg)
 
-                    Thread.sleep(1000)
+                while (true) {
+                    val service = MainActivity.getService()
+                    if (service != null)
+                    {
+                        var msg = Message()
+                        msg.what = service!!.getCurrentPosition()
+                        handler.sendMessage(msg)
+                        Thread.sleep(500)
+                    }
                 }
             } catch (e: InterruptedException) {
 
+            } catch (e: Exception) {
+                Log.e("Player", e.toString())
             }
         })
-
         thread?.start()
+
+        Log.i("Player", "onResume")
     }
 
     override fun onPause() {
@@ -111,6 +112,58 @@ class PlayerFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProvider(this).get(PlayerViewModel::class.java)
-        // TODO: Use the ViewModel
+    }
+
+    private fun onPreviousButtonClicked() {
+        Log.i("Player", "onPreviousButtonClicked")
+        if (MainActivity.isServiceBound()) {
+            MainActivity.getService()!!.previousSong()
+        }
+    }
+
+    private fun onPlayPauseButtonClicked() {
+        Log.i("Player", "onPlayPauseButtonClicked")
+        if (MainActivity.isServiceBound()) {
+            if (MainActivity.getService()!!.isPlaying()) {
+                MainActivity.getService()!!.pause()
+                setPlayPauseButtonIcon(false)
+            } else {
+                MainActivity.getService()!!.play()
+                setPlayPauseButtonIcon(true)
+            }
+        }
+    }
+
+    private fun onNextButtonClicked() {
+        Log.i("Player", "onNextButtonClicked")
+        if (MainActivity.isServiceBound()) {
+            MainActivity.getService()!!.nextSong()
+        }
+    }
+
+    private fun updateView(position: Int, maxPosition: Int, isPlaying: Boolean) {
+        // Update song info
+        val musicFile = MainActivity.getService()!!.getCurrentSong()
+        if (musicFile != null) {
+            titleTV.text = musicFile.title
+            artistTV.text = musicFile.artist
+        }
+
+        // Update progressBar
+        progressSB.progress = position
+        progressSB.max = maxPosition
+
+        // Update labels
+        elapsedTimeTV.text = TimeHelper.secondsToLabel(position)
+        totalTimeTV.text = TimeHelper.secondsToLabel(maxPosition)
+
+        setPlayPauseButtonIcon(isPlaying)
+    }
+
+    private fun setPlayPauseButtonIcon(isPlaying: Boolean) {
+        if (isPlaying)
+            playIB.setImageResource(R.drawable.ic_round_pause_circle_24)
+        else
+            playIB.setImageResource(R.drawable.ic_round_play_circle_24)
     }
 }
