@@ -12,6 +12,7 @@ import com.kayethan.hititmusic.MainActivity
 import com.kayethan.hititmusic.R
 import com.kayethan.hititmusic.data.MusicFile
 import com.kayethan.hititmusic.databinding.MusicListFragmentBinding
+import com.kayethan.hititmusic.player.PlayerFragment
 import kotlinx.android.synthetic.main.music_list_fragment.*
 
 class MusicListFragment : Fragment(), MusicListAdapter.OnItemClickListener {
@@ -57,5 +58,6 @@ class MusicListFragment : Fragment(), MusicListAdapter.OnItemClickListener {
 
     override fun onItemClick(position: Int, musicFile: MusicFile) {
         MainActivity.getService()?.playMusic(position)
+        MainActivity.changeToPlayer()
     }
 }

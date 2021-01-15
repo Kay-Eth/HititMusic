@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kayethan.hititmusic.data.MusicFile
 import com.kayethan.hititmusic.databinding.ActivityMainBinding
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     companion object {
+        private lateinit var MA: MainActivity
         private var musicService: HititMusicService? = null
         private var bound: Boolean = false
 
@@ -46,6 +48,10 @@ class MainActivity : AppCompatActivity() {
 
         fun isServiceBound(): Boolean {
             return bound
+        }
+
+        fun changeToPlayer() {
+            MA.bottomNavigationView.selectedItemId = R.id.navigation_player
         }
     }
 
@@ -84,6 +90,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MA = this
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
