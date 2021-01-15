@@ -31,6 +31,7 @@ class HititMusicService : Service() {
     private lateinit var mediaPlayer: MediaPlayer
     private var musicFiles: ArrayList<MusicFile> = ArrayList<MusicFile>()
     private var currentIndex: Int = 0
+    private var config_flag: Boolean = true
 
     private val binder = HititMusicBinder()
 
@@ -54,6 +55,8 @@ class HititMusicService : Service() {
         mediaPlayer.setAudioAttributes(
                 AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build()
         )
+
+        mediaPlayer.setOnPreparedListener { this@HititMusicService.onPrepared() }
         if (musicFiles.size > 0) {
             setMusicDataSource(musicFiles[currentIndex])
         } else {
@@ -73,8 +76,7 @@ class HititMusicService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             App.MUSIC_SERVICE_ACTION_START -> showNotification()
-            App.MUSIC_SERVICE_ACTION_PLAY -> playPause()
-            App.MUSIC_SERVICE_ACTION_PAUSE -> pause()
+            App.MUSIC_SERVICE_ACTION_PLAY_PAUSE -> playPause()
             App.MUSIC_SERVICE_ACTION_STOP -> onDestroy()
             App.MUSIC_SERVICE_ACTION_NEXT -> nextSong()
             App.MUSIC_SERVICE_ACTION_PREVIOUS -> previousSong()
@@ -92,7 +94,7 @@ class HititMusicService : Service() {
         val builder = NotificationCompat.Builder(this, App.CHANNEL_ID)
 
         val plIntent = Intent(this, HititMusicService::class.java)
-                .setAction(App.MUSIC_SERVICE_ACTION_PLAY)
+                .setAction(App.MUSIC_SERVICE_ACTION_PLAY_PAUSE)
         val playIntent = PendingIntent.getService(this, 100, plIntent, 0)
 
         val nxIntent = Intent(this, HititMusicService::class.java)
@@ -114,7 +116,7 @@ class HititMusicService : Service() {
                 .addAction(NotificationCompat.Action(R.drawable.ic_round_skip_next_24, "Next", nextIntent))
                 .build()
         val notificationManager = NotificationManagerCompat.from(this)
-        notificationManager.notify(1, builder.build())
+        notificationManager.notify(1, notification)
         if (start)
             startForeground(1, notification)
     }
@@ -162,27 +164,31 @@ class HititMusicService : Service() {
     }
 
     fun play() {
+        Log.i("SERVICE", "Play")
         if (musicFiles.size == 0)
             return
         mediaPlayer.start()
+        showNotification(false)
     }
 
     fun playPause() {
+        Log.i("SERVICE", "Play/Pause")
         if (isPlaying())
             pause()
         else
             play()
-
-        showNotification(false)
     }
 
     fun pause() {
+        Log.i("SERVICE", "Pause")
         if (musicFiles.size == 0)
             return
         mediaPlayer.pause()
+        showNotification(false)
     }
 
     fun seekTo(seconds: Int) {
+        Log.i("SERVICE", "SeekTo: $seconds")
         if (musicFiles.size == 0)
             return
         mediaPlayer.seekTo(seconds)
@@ -201,6 +207,7 @@ class HititMusicService : Service() {
     }
 
     fun nextSong() {
+        Log.i("SERVICE", "Next song")
         if (musicFiles.size == 0)
             return
 
@@ -214,6 +221,7 @@ class HititMusicService : Service() {
     }
 
     fun previousSong() {
+        Log.i("SERVICE", "Previous song")
         if (musicFiles.size == 0)
             return
 
@@ -232,6 +240,7 @@ class HititMusicService : Service() {
     }
 
     fun playMusic(idx: Int, reset: Boolean = true) {
+        Log.i("SERVICE", "Play music: $idx, reset: $reset")
         if (musicFiles.size == 0)
             return
 
@@ -242,19 +251,32 @@ class HititMusicService : Service() {
         if (reset)
             mediaPlayer.reset()
         setMusicDataSource(musicFiles[idx])
-        play()
+//        play()
+//        showNotification(false)
     }
 
     private fun setMusicDataSource(musicFile: MusicFile) {
         if (musicFiles.size == 0)
             return
-
-        showNotification(false)
+        Log.i("SERVICE", "Set music data source: ${musicFile.title}")
         mediaPlayer.setDataSource(applicationContext, ContentUris.withAppendedId(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, musicFile.id))
         mediaPlayer.prepare()
     }
 
+    private fun onPrepared() {
+        if (config_flag)
+        {
+            config_flag = false
+        }
+        else
+        {
+            play()
+            showNotification(false)
+        }
+    }
+
     private fun onSongEnd() {
+        Log.i("SERVICE", "On song end")
         if (musicFiles.size == 0)
             return
 

@@ -102,7 +102,6 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null)
             bottomNavigationView.selectedItemId = R.id.navigation_player
 
-
         if (musicService == null) {
             Log.i("Main", "onCreate")
             Intent(this, HititMusicService::class.java).also { intent ->
@@ -121,6 +120,11 @@ class MainActivity : AppCompatActivity() {
         Intent(this, HititMusicService::class.java).also { intent ->
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        MA = this
     }
 
     override fun onDestroy() {

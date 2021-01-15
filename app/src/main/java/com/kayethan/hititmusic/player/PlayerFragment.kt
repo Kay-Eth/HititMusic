@@ -116,29 +116,23 @@ class PlayerFragment : Fragment() {
 
     private fun onPreviousButtonClicked() {
         Log.i("Player", "onPreviousButtonClicked")
-        if (MainActivity.isServiceBound()) {
-            MainActivity.getService()?.previousSong()
-        }
+        MainActivity.getService()?.previousSong()
     }
 
     private fun onPlayPauseButtonClicked() {
-        Log.i("Player", "onPlayPauseButtonClicked")
-        if (MainActivity.isServiceBound()) {
-            if (MainActivity.getService()?.isPlaying() == true) {
-                MainActivity.getService()?.pause()
-                setPlayPauseButtonIcon(false)
-            } else if (MainActivity.getService()?.isPlaying() == false) {
-                MainActivity.getService()?.play()
-                setPlayPauseButtonIcon(true)
-            }
+        Log.i("Player", "onPlayPauseButtonClicked: " + MainActivity.isServiceBound().toString())
+        if (MainActivity.getService()?.isPlaying() == true) {
+            MainActivity.getService()?.pause()
+            setPlayPauseButtonIcon(false)
+        } else if (MainActivity.getService()?.isPlaying() == false) {
+            MainActivity.getService()?.play()
+            setPlayPauseButtonIcon(true)
         }
     }
 
     private fun onNextButtonClicked() {
         Log.i("Player", "onNextButtonClicked")
-        if (MainActivity.isServiceBound()) {
-            MainActivity.getService()?.nextSong()
-        }
+        MainActivity.getService()?.nextSong()
     }
 
     private fun updateView(position: Int, maxPosition: Int, isPlaying: Boolean) {
