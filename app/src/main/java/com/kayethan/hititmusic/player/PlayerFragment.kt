@@ -117,18 +117,18 @@ class PlayerFragment : Fragment() {
     private fun onPreviousButtonClicked() {
         Log.i("Player", "onPreviousButtonClicked")
         if (MainActivity.isServiceBound()) {
-            MainActivity.getService()!!.previousSong()
+            MainActivity.getService()?.previousSong()
         }
     }
 
     private fun onPlayPauseButtonClicked() {
         Log.i("Player", "onPlayPauseButtonClicked")
         if (MainActivity.isServiceBound()) {
-            if (MainActivity.getService()!!.isPlaying()) {
-                MainActivity.getService()!!.pause()
+            if (MainActivity.getService()?.isPlaying() == true) {
+                MainActivity.getService()?.pause()
                 setPlayPauseButtonIcon(false)
-            } else {
-                MainActivity.getService()!!.play()
+            } else if (MainActivity.getService()?.isPlaying() == false) {
+                MainActivity.getService()?.play()
                 setPlayPauseButtonIcon(true)
             }
         }
@@ -137,7 +137,7 @@ class PlayerFragment : Fragment() {
     private fun onNextButtonClicked() {
         Log.i("Player", "onNextButtonClicked")
         if (MainActivity.isServiceBound()) {
-            MainActivity.getService()!!.nextSong()
+            MainActivity.getService()?.nextSong()
         }
     }
 

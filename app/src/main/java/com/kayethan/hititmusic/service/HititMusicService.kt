@@ -1,22 +1,26 @@
 package com.kayethan.hititmusic.service
 
+import android.app.Notification
+import android.app.PendingIntent
 import android.app.Service
+import android.app.TaskStackBuilder
 import android.content.ContentUris
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Binder
-import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
-import android.support.v4.media.MediaBrowserCompat
 import android.util.Log
 import android.widget.Toast
-import androidx.media.MediaBrowserServiceCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.kayethan.hititmusic.App
 import com.kayethan.hititmusic.MainActivity
 import com.kayethan.hititmusic.R
 import com.kayethan.hititmusic.data.MusicFile
 import java.util.*
+
 
 class HititMusicService : Service() {
 
@@ -48,7 +52,7 @@ class HititMusicService : Service() {
         mediaPlayer = MediaPlayer()
         mediaPlayer.setOnCompletionListener { this@HititMusicService.onSongEnd() }
         mediaPlayer.setAudioAttributes(
-            AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build()
+                AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build()
         )
         if (musicFiles.size > 0) {
             setMusicDataSource(musicFiles[currentIndex])
@@ -62,6 +66,57 @@ class HititMusicService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         mediaPlayer.release()
+        stopForeground(true)
+        stopSelf()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            App.MUSIC_SERVICE_ACTION_START -> showNotification()
+            App.MUSIC_SERVICE_ACTION_PLAY -> playPause()
+            App.MUSIC_SERVICE_ACTION_PAUSE -> pause()
+            App.MUSIC_SERVICE_ACTION_STOP -> onDestroy()
+            App.MUSIC_SERVICE_ACTION_NEXT -> nextSong()
+            App.MUSIC_SERVICE_ACTION_PREVIOUS -> previousSong()
+        }
+
+        return START_NOT_STICKY
+    }
+
+    private fun showNotification(start: Boolean = true) {
+        val resultIntent = Intent(this, MainActivity::class.java)
+        val stackBuilder: TaskStackBuilder = TaskStackBuilder.create(this)
+        stackBuilder.addNextIntentWithParentStack(resultIntent)
+        val resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        val builder = NotificationCompat.Builder(this, App.CHANNEL_ID)
+
+        val plIntent = Intent(this, HititMusicService::class.java)
+                .setAction(App.MUSIC_SERVICE_ACTION_PLAY)
+        val playIntent = PendingIntent.getService(this, 100, plIntent, 0)
+
+        val nxIntent = Intent(this, HititMusicService::class.java)
+                .setAction(App.MUSIC_SERVICE_ACTION_NEXT)
+        val nextIntent = PendingIntent.getService(this, 100, nxIntent, 0)
+
+        val prIntent = Intent(this, HititMusicService::class.java)
+                .setAction(App.MUSIC_SERVICE_ACTION_PREVIOUS)
+        val previousIntent = PendingIntent.getService(this, 100, prIntent, 0)
+
+        val notification = builder.setOngoing(true)
+                .setSmallIcon(R.drawable.ic_round_play_arrow_24)
+                .setContentTitle("Hitit MusicPlayer")
+                .setContentText(musicFiles[currentIndex].title + " - " + musicFiles[currentIndex].artist)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .setContentIntent(resultPendingIntent)
+                .addAction(NotificationCompat.Action(R.drawable.ic_round_skip_previous_24, "Previous", previousIntent))
+                .addAction(NotificationCompat.Action(R.drawable.ic_round_play_arrow_24, (if (isPlaying()) "Pause" else "Play"), playIntent))
+                .addAction(NotificationCompat.Action(R.drawable.ic_round_skip_next_24, "Next", nextIntent))
+                .build()
+        val notificationManager = NotificationManagerCompat.from(this)
+        notificationManager.notify(1, builder.build())
+        if (start)
+            startForeground(1, notification)
     }
 
     fun getAllMusic(): ArrayList<MusicFile> {
@@ -110,6 +165,15 @@ class HititMusicService : Service() {
         if (musicFiles.size == 0)
             return
         mediaPlayer.start()
+    }
+
+    fun playPause() {
+        if (isPlaying())
+            pause()
+        else
+            play()
+
+        showNotification(false)
     }
 
     fun pause() {
@@ -185,6 +249,7 @@ class HititMusicService : Service() {
         if (musicFiles.size == 0)
             return
 
+        showNotification(false)
         mediaPlayer.setDataSource(applicationContext, ContentUris.withAppendedId(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, musicFile.id))
         mediaPlayer.prepare()
     }

@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
@@ -20,7 +21,6 @@ import com.kayethan.hititmusic.data.MusicFile
 import com.kayethan.hititmusic.databinding.ActivityMainBinding
 import com.kayethan.hititmusic.musiclist.MusicListFragment
 import com.kayethan.hititmusic.player.PlayerFragment
-import com.kayethan.hititmusic.service.AppMusicService
 import com.kayethan.hititmusic.service.HititMusicService
 import com.kayethan.hititmusic.settings.SettingsFragment
 import kotlinx.android.synthetic.main.activity_main.*
@@ -99,31 +99,28 @@ class MainActivity : AppCompatActivity() {
 
         bottomNavigationView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
-        if (savedInstanceState == null) {
+        if (savedInstanceState == null)
             bottomNavigationView.selectedItemId = R.id.navigation_player
+
+
+        if (musicService == null) {
+            Log.i("Main", "onCreate")
+            Intent(this, HititMusicService::class.java).also { intent ->
+                bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            }
+
+            val intent = Intent(this, HititMusicService::class.java)
+                    .setAction(App.MUSIC_SERVICE_ACTION_START)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            }else{
+                startService(intent);
+            }
         }
 
-        Log.i("Main", "onCreate")
         Intent(this, HititMusicService::class.java).also { intent ->
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
-
-//        val musicFiles = getAllMusic()
-//
-//        for (file in musicFiles) {
-//            Log.i("TEST", file.path + " | " + file.title)
-//        }
-
-//        // TEMP
-//        mediaPlayer = MediaPlayer()
-//        mediaPlayer.setAudioAttributes(
-//                AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_MEDIA).build()
-//        )
-//        mediaPlayer.setDataSource(applicationContext, ContentUris.withAppendedId(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, musicFiles[0].id))
-//        mediaPlayer.prepare()
-//        mediaPlayer.start()
-//        mediaPlayer.isLooping = true
-//        mediaPlayer.setVolume(0.5f, 0.5f)
     }
 
     override fun onDestroy() {
@@ -179,34 +176,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-//    fun getAllMusic(): ArrayList<MusicFile> {
-//        val songUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-//        val songCursor = contentResolver.query(songUri, null, null, null, null)
-//        val result = ArrayList<MusicFile>()
-//
-//        if (songCursor != null && songCursor.moveToFirst()) {
-//            val songId: Int = songCursor.getColumnIndex(MediaStore.Audio.Media._ID)
-//            val songTitle: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
-//            val songArtist: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
-//            val songAlbum: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
-//            val songDuration: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
-//            val songLocation: Int = songCursor.getColumnIndex(MediaStore.Audio.Media.DATA)
-//
-//            do {
-//                val currentId: Long = songCursor.getLong(songId)
-//                val currentTitle: String = songCursor.getString(songTitle)
-//                val currentArtist: String = songCursor.getString(songArtist)
-//                val currentLocation: String = songCursor.getString(songLocation)
-//                val currentDuration: Int = songCursor.getInt(songDuration)
-//                val currentAlbum: String = songCursor.getString(songAlbum)
-//
-//                if (currentLocation.endsWith(".mp3"))
-//                    result.add(MusicFile(currentId, currentLocation, currentTitle, currentArtist, currentAlbum, currentDuration))
-//
-//            } while (songCursor.moveToNext())
-//        }
-//
-//        return result
-//    }
 }

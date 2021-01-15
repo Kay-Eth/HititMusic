@@ -8,6 +8,12 @@ import android.os.Build
 class App : Application() {
     companion object {
         const val CHANNEL_ID = "hititMusicServiceChannel"
+        const val MUSIC_SERVICE_ACTION_START = "com.kayethan.hititmusic.player.start"
+        const val MUSIC_SERVICE_ACTION_PLAY = "com.kayethan.hititmusic.player.play"
+        const val MUSIC_SERVICE_ACTION_PAUSE = "com.kayethan.hititmusic.player.pause"
+        const val MUSIC_SERVICE_ACTION_STOP = "com.kayethan.hititmusic.player.stop"
+        const val MUSIC_SERVICE_ACTION_NEXT = "com.kayethan.hititmusic.player.next"
+        const val MUSIC_SERVICE_ACTION_PREVIOUS = "com.kayethan.hititmusic.player.previous"
     }
 
     override fun onCreate() {
